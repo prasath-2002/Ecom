@@ -2,12 +2,53 @@ import { EditSubscription } from "@/features/subscription/services";
 import { useState, useEffect, type ChangeEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
+// Define TypeScript interfaces for better type safety
+interface Feature {
+    featureName: string;
+    count: string | number;
+    unlimited?: boolean;
+}
+
+interface Unlimited {
+    Students: string | boolean;
+    Admins: string | boolean;
+    Teachers: string | boolean;
+    Batches: string | boolean;
+    Courses: string | boolean;
+    Classes: string | boolean;
+    [key: string]: string | boolean;
+}
+
+interface Plan {
+    name: string;
+    description: string;
+    price: string | number;
+    duration: string | number;
+    durationType: string;
+    supportLevel: string;
+    features: Feature[];
+    image?: string | null;
+    [key: string]: any;
+}
+
+interface FormData extends Plan {
+    unlimited: Unlimited;
+    image: File | null;
+    imagePreview: string | null;
+}
+
+interface EditSubscriptionResponse {
+    success: boolean;
+    message?: string;
+    data?: any;
+}
+
 const SubscriptionEdit = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const incomingPlan = location.state?.plan;
 
-    const [formData, setFormData] = useState<any>({
+    const [formData, setFormData] = useState<FormData>({
         name: "",
         description: "",
         price: "",
@@ -16,12 +57,12 @@ const SubscriptionEdit = () => {
         supportLevel: "",
         features: [],
         unlimited: {
-            Students: "",
-            Admins: "",
-            Teachers: "",
-            Batches: "",
-            Courses: "",
-            Classes: "",
+            Students: false,
+            Admins: false,
+            Teachers: false,
+            Batches: false,
+            Courses: false,
+            Classes: false,
         },
         image: null,
         imagePreview: null,
@@ -35,23 +76,33 @@ const SubscriptionEdit = () => {
                 unlimited: item?.count === "Unlimited",
             }));
 
-            const initialUnlimited: any = {};
-            mappedFeatures.forEach((feature: any) => {
-                initialUnlimited[feature.featureName] = feature.unlimited;
+            const initialUnlimited: Unlimited = {
+                Students: false,
+                Admins: false,
+                Teachers: false,
+                Batches: false,
+                Courses: false,
+                Classes: false,
+            };
+            
+            mappedFeatures.forEach((feature: Feature) => {
+                if (feature.featureName && feature.featureName in initialUnlimited) {
+                    initialUnlimited[feature.featureName] = feature.unlimited || false;
+                }
             });
 
             setFormData({
                 ...incomingPlan,
                 features: mappedFeatures,
                 unlimited: initialUnlimited,
-                imagePreview: incomingPlan.image,
+                imagePreview: incomingPlan.image || null,
             });
         }
     }, [incomingPlan]);
 
     const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>, key: string) => {
         const value = e.target.value;
-        setFormData((prev: any) => ({
+        setFormData((prev: FormData) => ({
             ...prev,
             [key]: value,
         }));
@@ -59,9 +110,9 @@ const SubscriptionEdit = () => {
 
     const handleFeatureChange = (e: ChangeEvent<HTMLInputElement>, label: string) => {
         const value = e.target.value;
-        setFormData((prev: any) => ({
+        setFormData((prev: FormData) => ({
             ...prev,
-            features: prev.features.map((f: any) =>
+            features: prev.features.map((f: Feature) =>
                 f.featureName === label ? { ...f, count: value, unlimited: false } : f
             ),
             unlimited: { ...prev.unlimited, [label]: false },
@@ -69,24 +120,27 @@ const SubscriptionEdit = () => {
     };
 
     const handleUnlimitedChange = (label: string) => {
-        setFormData((prev: any) => ({
-            ...prev,
-            unlimited: {
-                ...prev.unlimited,
-                [label]: !prev.unlimited[label],
-            },
-            features: prev.features.map((f: any) =>
-                f.featureName === label
-                    ? { ...f, count: !prev.unlimited[label] ? "Unlimited" : "", unlimited: !prev.unlimited[label] }
-                    : f
-            ),
-        }));
+        setFormData((prev: FormData) => {
+            const currentUnlimited = prev.unlimited[label] || false;
+            return {
+                ...prev,
+                unlimited: {
+                    ...prev.unlimited,
+                    [label]: !currentUnlimited,
+                },
+                features: prev.features.map((f: Feature) =>
+                    f.featureName === label
+                        ? { ...f, count: !currentUnlimited ? "Unlimited" : "", unlimited: !currentUnlimited }
+                        : f
+                ),
+            };
+        });
     };
 
     const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            setFormData((prev: any) => ({
+            setFormData((prev: FormData) => ({
                 ...prev,
                 image: file,
                 imagePreview: URL.createObjectURL(file),
@@ -95,7 +149,7 @@ const SubscriptionEdit = () => {
     };
 
     const handleImageReset = () => {
-        setFormData((prev: any) => ({
+        setFormData((prev: FormData) => ({
             ...prev,
             image: null,
             imagePreview: null,
@@ -107,7 +161,7 @@ const SubscriptionEdit = () => {
 
         const payload = {
             ...formData,
-            features: formData.features.map((f: any) => ({
+            features: formData.features.map((f: Feature) => ({
                 featureName: f.featureName,
                 count: f.count,
             })),
@@ -117,22 +171,23 @@ const SubscriptionEdit = () => {
         console.log("Payload to send:", payload);
 
         try {
-            const res = await EditSubscription(payload);
-            console.log("Subscription Edited Successfully:", res);  
-            if (res.success) {
+            const res = await EditSubscription(payload) as EditSubscriptionResponse;
+            console.log("Subscription Edited Successfully:", res);
+            
+            if (res && res.success) {
                 navigate("/subscriptions", { state: { updatedPlan: payload } });
             } else {
-                console.error("Edit failed:", res.message || "Unknown error");
+                console.error("Edit failed:", res?.message || "Unknown error");
             }
         } catch (error) {
             console.error("Error Editing subscription:", error);
         }
     };
 
-
     return (
         <form onSubmit={handleSubmit} className="min-h-screen p-8 text-sm">
             <button
+                type="button"
                 onClick={() => navigate(-1)}
                 className="px-4 py-2 rounded-tl-xl mb-3 rounded-br-xl border border-[#68B39F] text-[#68B39F] hover:bg-[#68B39F] hover:text-white transition"
             >
@@ -233,22 +288,22 @@ const SubscriptionEdit = () => {
                         />
 
                         {["Students", "Teachers", "Courses"].map((label) => {
-                            const feature = formData.features.find((f: any) => f.featureName  === label);
+                            const feature = formData.features.find((f: Feature) => f.featureName === label);
                             return (
                                 <div key={label} className="mb-4">
                                     <label className="font-semibold block mb-1">Number of {label}</label>
                                     <input
                                         type="text"
-                                        placeholder={`Enter number of ${label.toLowerCase()}`}
+                                        placeholder={Enter number of ${label.toLowerCase()}}
                                         value={feature?.count || ""}
-                                        disabled={formData.unlimited[label]}
+                                        disabled={!!formData.unlimited[label]}
                                         onChange={(e) => handleFeatureChange(e, label)}
                                         className="w-full border rounded p-2"
                                     />
                                     <label className="block mt-1">
                                         <input
                                             type="checkbox"
-                                            checked={formData.unlimited[label]}
+                                            checked={!!formData.unlimited[label]}
                                             onChange={() => handleUnlimitedChange(label)}
                                             className="mr-2"
                                         />
@@ -273,22 +328,22 @@ const SubscriptionEdit = () => {
                         </select>
 
                         {["Admins", "Batches", "Classes"].map((label) => {
-                            const feature = formData.features.find((f: any) => f.featureName === label);
+                            const feature = formData.features.find((f: Feature) => f.featureName === label);
                             return (
                                 <div key={label} className="mb-4 mt-4">
                                     <label className="font-semibold block mb-1">Number of {label}</label>
                                     <input
                                         type="text"
-                                        placeholder={`Enter number of ${label.toLowerCase()}`}
+                                        placeholder={Enter number of ${label.toLowerCase()}}
                                         value={feature?.count || ""}
-                                        disabled={formData.unlimited[label]}
+                                        disabled={!!formData.unlimited[label]}
                                         onChange={(e) => handleFeatureChange(e, label)}
                                         className="w-full border rounded p-2"
                                     />
                                     <label className="block mt-1">
                                         <input
                                             type="checkbox"
-                                            checked={formData.unlimited[label]}
+                                            checked={!!formData.unlimited[label]}
                                             onChange={() => handleUnlimitedChange(label)}
                                             className="mr-2"
                                         />
@@ -305,7 +360,7 @@ const SubscriptionEdit = () => {
                         type="submit"
                         className="px-4 py-2 rounded-tl-xl rounded-br-xl bg-[#68B39F] text-white"
                     >
-                        Update/submit
+                        Update/Submit
                     </button>
                 </div>
             </div>
