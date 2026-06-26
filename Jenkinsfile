@@ -23,7 +23,6 @@ pipeline {
                     sh 'npm install'
                     sh 'npm run build'
                 }
-            }
         }
 
         stage('Deploy to S3') {
