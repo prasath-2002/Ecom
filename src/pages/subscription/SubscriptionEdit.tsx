@@ -31,7 +31,7 @@ interface Plan {
     [key: string]: any;
 }
 
-interface FormData extends Plan {
+interface FormData extends Omit<Plan, 'image'> {
     unlimited: Unlimited;
     image: File | null;
     imagePreview: string | null;
@@ -171,10 +171,11 @@ const SubscriptionEdit = () => {
         console.log("Payload to send:", payload);
 
         try {
-            const res = await EditSubscription(payload) as EditSubscriptionResponse;
-            console.log("Subscription Edited Successfully:", res);
+            const response = await EditSubscription(payload);
+            const res: EditSubscriptionResponse = response?.data; // Get data from axios response
+            console.log("Subscription Edited Successfully:", res); 
             
-            if (res && res.success) {
+            if (res?.success) {
                 navigate("/subscriptions", { state: { updatedPlan: payload } });
             } else {
                 console.error("Edit failed:", res?.message || "Unknown error");
