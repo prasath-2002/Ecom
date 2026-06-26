@@ -294,7 +294,7 @@ const SubscriptionEdit = () => {
                                     <label className="font-semibold block mb-1">Number of {label}</label>
                                     <input
                                         type="text"
-                                        placeholder={Enter number of ${label.toLowerCase()}}
+                                        placeholder={'Enter number of ${label.toLowerCase()}'}
                                         value={feature?.count || ""}
                                         disabled={!!formData.unlimited[label]}
                                         onChange={(e) => handleFeatureChange(e, label)}
@@ -334,7 +334,7 @@ const SubscriptionEdit = () => {
                                     <label className="font-semibold block mb-1">Number of {label}</label>
                                     <input
                                         type="text"
-                                        placeholder={Enter number of ${label.toLowerCase()}}
+                                        placeholder={'Enter number of ${label.toLowerCase()}'}
                                         value={feature?.count || ""}
                                         disabled={!!formData.unlimited[label]}
                                         onChange={(e) => handleFeatureChange(e, label)}
