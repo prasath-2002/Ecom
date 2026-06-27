@@ -250,31 +250,27 @@ const Institutes: React.FC = () => {
   //   //   },
   //   // ]);
   // }, [filteredInstitutes, instituteData]);
-
-  // Update institute plan
-  const updateInstitutePlan = (id: number, newPlan: string) => {
-    console.log(`Updating institute ${id} to plan ${newPlan}`);
-  };
-
-  // Update institute status
-  const updateInstituteStatus = (id: number, newStatus: string) => {
-    console.log(`Updating institute ${id} to status ${newStatus}`);
-  };
-
-  // Filter options
-  const subscriptionPlans = ['Basic Plan - Free', 'Standard', 'Premium'];
-  const statusOptions = ['Active', 'Blocked'];
-  const dateOptions = [
-    { value: 'lastWeek', label: 'Last Week' },
-    { value: 'lastMonth', label: 'Last Month' },
-    { value: 'lastYear', label: 'Last Year' },
-  ];
-
-  const resetFilters = () => {
-    setSelectedPlan(null);
-    setSelectedStatus(null);
-    setSelectedDate(null);
-  };
+// Update institute plan
+// const updateInstitutePlan = (id: number, newPlan: string) => {
+//   console.log(`Updating institute ${id} to plan ${newPlan}`);
+// };
+// Update institute status
+const updateInstituteStatus = (id: number, newStatus: string) => {
+  console.log(`Updating institute ${id} to status ${newStatus}`);
+};
+// Filter options
+const subscriptionPlans = ['Basic Plan - Free', 'Standard', 'Premium'];
+const statusOptions = ['Active', 'Blocked'];
+const dateOptions = [
+  { value: 'lastWeek', label: 'Last Week' },
+  { value: 'lastMonth', label: 'Last Month' },
+  { value: 'lastYear', label: 'Last Year' },
+];
+const resetFilters = () => {
+  setSelectedPlan(null);
+  setSelectedStatus(null);
+  setSelectedDate(null);
+};
 
   const getLocationString = (institute: Institute) => {
     const { city, state, country } = institute.contact_info.address;
